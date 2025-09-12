@@ -137,8 +137,10 @@ if st.button("Generate Sankey"):
         st.plotly_chart(fig, width="stretch", height=700)
 
         # ---- Download button ----
+        # ---- Download button (HTML version) ----
         st.download_button(
-            "Download Sankey as PNG",
-            fig.to_image(format="png", width=1200, height=600, scale=3),
-            "sankey.png", "image/png"
+            "Download Sankey as HTML",
+            fig.to_html(include_plotlyjs='cdn'),
+            "sankey.html",
+            "text/html"
         )
