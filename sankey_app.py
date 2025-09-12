@@ -16,20 +16,6 @@ st.markdown("""
 
 st.title("Sankey Diagram Generator")
 
-# ---- User inputs ----
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    diagram_title = st.text_input("Diagram title", "Sankey Diagram")
-with col2:
-    units = st.text_input("Units", "kWh")
-with col3:
-    display_mode = st.radio("Show on nodes", ["Values", "Percentages"], horizontal=True)
-with col4:
-    if display_mode == "Values":
-        round_factor = st.selectbox("Round to nearest", [10000, 1000, 100, 10, 1], index=3)
-    else:
-        percent_format = st.selectbox("Decimal places", [0,1,2,3], index=0)
-
 # ---- Example data ----
 default_data = {
     "source": ["Steam","Natural Gas","Steam","Process","Process","Process","Process","Process","Process","Process","Natural Gas"],
@@ -51,20 +37,37 @@ with colA:
     )
 with colB:
     font_size = st.slider("Font Size", 10, 20, 14)
-
-# Define palettes
-palettes = {
-    "Default": ["#41484f", "#015651", "#49dd5b", "#48bfaf", "#4c2d83"],
-    "Warm": ["#FF5733", "#FFC300", "#FF8D1A", "#FF33A6", "#FF7F50"],
-    "Cool": ["#33C1FF", "#33FF57", "#33FFF5", "#3380FF", "#3357FF"],
-    "Monochrome": ["#41484f", "#666666", "#999999", "#CCCCCC", "#EEEEEE"]
-}
-
 with colC:
-    palette_name = st.selectbox("Color Palette", list(palettes.keys()), index=0)
-    color_palette = palettes[palette_name]  # <- actual list of colors
+    palette_options = {
+        "Default": ["#41484f", "#015651", "#49dd5b", "#48bfaf", "#4c2d83"],
+        "Warm": ["#FF5733", "#FFC300", "#FF8D1A", "#FF33A6", "#FF7F50"],
+        "Cool": ["#33C1FF", "#33FF57", "#33FFF5", "#3380FF", "#3357FF"],
+        "Monochrome": ["#41484f", "#666666", "#999999", "#CCCCCC", "#EEEEEE"]
+    }
+    palette_name = st.selectbox("Color Palette", list(palette_options.keys()), index=0)
+    color_palette = palette_options[palette_name]
 
-st.markdown("**Note:** Preview may appear blurry due to formatting restrictions in Streamlit. The download is fully interactive and can be zoomed or adjusted for clarity.")
+# ---- Node display options ----
+st.markdown("### Node Display Options")
+col1, col2 = st.columns([2,2])
+with col1:
+    display_mode = st.radio("Show on nodes", ["Values", "Percentages"], horizontal=True)
+with col2:
+    if display_mode == "Values":
+        round_factor = st.selectbox("Round to nearest", [10000, 1000, 100, 10, 1], index=3)
+    else:
+        percent_format = st.selectbox("Decimal places", [0,1,2,3], index=0)
+
+# ---- Preview scale for sharper text ----
+preview_scale = st.slider("Preview Scale (zoom)", 0.5, 3.0, 1.0, 0.1)
+st.markdown("**Note:** Preview may appear blurry due to Streamlit rendering limitations. Downloaded HTML is fully interactive and clear.")
+
+# ---- Diagram title and units ----
+col_title, col_units = st.columns(2)
+with col_title:
+    diagram_title = st.text_input("Diagram Title", "Sankey Diagram")
+with col_units:
+    units = st.text_input("Units", "kWh")
 
 # ---- Sankey generation ----
 if st.button("Generate Sankey"):
@@ -126,7 +129,6 @@ if st.button("Generate Sankey"):
             hex_color = hex_color.lstrip("#")
             r, g, b = int(hex_color[0:2],16), int(hex_color[2:4],16), int(hex_color[4:6],16)
             return f"rgba({r},{g},{b},{alpha})"
-
         link_colors = [hex_to_rgba(node_color_list[label_idx[s]]) for s in df["source"]]
 
         # ---- Plotly Sankey ----
@@ -152,10 +154,11 @@ if st.button("Generate Sankey"):
             font=dict(size=font_size, family=font_family, color="#41484f"),
             plot_bgcolor="white", paper_bgcolor="white",
             margin=dict(l=30, r=30, t=80, b=80),
-            height=700
+            height=int(700 * preview_scale)
         )
 
-        st.plotly_chart(fig, width="stretch", height=700)
+        # ---- Display Sankey ----
+        st.plotly_chart(fig, width="stretch", height=int(700 * preview_scale))
 
         # ---- HTML download ----
         st.download_button(
