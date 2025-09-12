@@ -2,35 +2,34 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
+# ---- Streamlit page config ----
 st.set_page_config(page_title="Dynamic Tier Sankey", layout="wide")
 
+# ---- Custom styles ----
 st.markdown("""
-&lt;style&gt;
+<style>
 .block-container {padding-top: 2rem;}
 .stDataFrame, .stDataEditor {border:1px solid #e0e0e0; border-radius:8px; background:#fff;}
-.stButton&gt;button, .stDownloadButton&gt;button {margin-top:1rem;}
-&lt;/style&gt;
+.stButton>button, .stDownloadButton>button {margin-top:1rem;}
+</style>
 """, unsafe_allow_html=True)
 
 st.title("Sankey Diagram Generator")
 
 # ---- User inputs ----
-col1, col2, col3, col4 = st.columns([2,2,2,2])
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     diagram_title = st.text_input("Diagram title", "Sankey Diagram")
-
 with col2:
     units = st.text_input("Units", "kWh")
-
 with col3:
-    display_mode = st.radio("Show on nodes", ["Values","Percentages"], horizontal=True)
-
+    display_mode = st.radio("Show on nodes", ["Values", "Percentages"], horizontal=True)
 with col4:
     if display_mode == "Values":
-        round_factor = st.selectbox("Round to nearest", [10000,1000,100,10,1], index=3)
+        round_factor = st.selectbox("Round to nearest", [10000, 1000, 100, 10, 1], index=3)
     else:
-        percent_format = st.selectbox("Number of decimal places", [0,1,2,3], index=0)
+        percent_format = st.selectbox("Decimal places", [0,1,2,3], index=0)
 
 # ---- Example data ----
 default_data = {
@@ -41,41 +40,34 @@ default_data = {
 df = st.data_editor(pd.DataFrame(default_data), num_rows="dynamic", width='stretch')
 df = df.dropna(subset=["source","target","value"]).reset_index(drop=True)
 
-# ---- Generate Sankey ----
+# ---- Sankey generation ----
 if st.button("Generate Sankey"):
-
-    # ---- Heading above plot ----
-    if display_mode == "Values":
-        rounding_text = f"Nearest {round_factor}"
-    else:
-        rounding_text = f"{percent_format} decimal place(s)"
-
-    st.markdown(f"**{diagram_title}** | Units: {units} | Rounding: {rounding_text} | Display Mode: {display_mode}")
 
     if df.empty:
         st.warning("⚠️ No valid data to plot.")
     else:
-        labels = pd.unique(df[["source","target"]].values.ravel())
-        label_idx = {label:i for i,label in enumerate(labels)}
 
-        # ---- Assign dynamic tiers ----
+        # ---- Labels and indices ----
+        labels = pd.unique(df[["source","target"]].values.ravel())
+        label_idx = {lbl: i for i, lbl in enumerate(labels)}
+
+        # ---- Assign tiers dynamically ----
         tiers = {lbl: None for lbl in labels}
         def assign_tier(lbl, current_tier):
             if tiers[lbl] is None or current_tier > tiers[lbl]:
                 tiers[lbl] = current_tier
                 for child in df[df['source']==lbl]['target']:
-                    assign_tier(child, current_tier+1)
-        sources = [lbl for lbl in labels if lbl not in df['target'].values]
-        for src in sources:
-            assign_tier(src, 0)
-
-        # ---- Normalize x positions ----
+                    assign_tier(child, current_tier + 1)
+        roots = [lbl for lbl in labels if lbl not in df['target'].values]
+        for root in roots:
+            assign_tier(root, 0)
         max_tier = max(tiers.values())
-        x = [tiers[lbl]/max_tier if max_tier>0 else 0.5 for lbl in labels]
 
-        # ---- y positions (tier-based spacing) ----
+        # ---- Node positions ----
+        x = [tiers[lbl]/max_tier if max_tier > 0 else 0.5 for lbl in labels]
+
         tier_groups = {}
-        for i,lbl in enumerate(labels):
+        for i, lbl in enumerate(labels):
             tier_groups.setdefault(tiers[lbl], []).append(i)
 
         y = [0]*len(labels)
@@ -91,7 +83,7 @@ if st.button("Generate Sankey"):
                 for j, idx in enumerate(indices):
                     y[idx] = tier_bottom + margin + j*step
 
-        # ---- Node labels ----
+        # ---- Node labels with value underneath ----
         tier0_nodes = [lbl for lbl, t in tiers.items() if t == 0]
         tier0_sum = df[df['source'].isin(tier0_nodes)]['value'].sum()
 
@@ -102,30 +94,24 @@ if st.button("Generate Sankey"):
                 val_text = f"{round(val/round_factor)*round_factor:,} {units}"
             else:
                 val_text = f"{val/tier0_sum*100:.{percent_format}f}%"
-            node_labels.append(f"{lbl} ({val_text})")
+            node_labels.append(f"{lbl}\n{val_text}")  # title on top, value below
 
-        # ---- Colour palette (without #f3f8ec) ----
+        # ---- Node colors ----
         palette = ["#41484f", "#015651", "#49dd5b", "#48bfaf", "#4c2d83"]
+        node_color_list = [palette[i % len(palette)] for i in range(len(labels))]
 
-        # Assign colours to nodes
-        node_colors = {}
-        for i, lbl in enumerate(labels):
-            node_colors[lbl] = palette[i % len(palette)]
-        node_color_list = [node_colors[lbl] for lbl in labels]
-
-        # Assign semi-transparent link colours based on source node
+        # ---- Link colors ----
         def hex_to_rgba(hex_color, alpha=0.3):
             hex_color = hex_color.lstrip("#")
             r, g, b = int(hex_color[0:2],16), int(hex_color[2:4],16), int(hex_color[4:6],16)
             return f"rgba({r},{g},{b},{alpha})"
-
-        link_colors = [hex_to_rgba(node_colors[s], alpha=0.3) for s in df["source"]]
+        link_colors = [hex_to_rgba(node_color_list[label_idx[s]]) for s in df["source"]]
 
         # ---- Plotly Sankey ----
         fig = go.Figure(go.Sankey(
             arrangement="snap",
             node=dict(
-                pad=30, thickness=18, line=dict(color="#41484f", width=0),
+                pad=30, thickness=20, line=dict(color="#41484f", width=0),
                 label=node_labels, x=x, y=y, color=node_color_list,
                 hovertemplate='%{label}<extra></extra>'
             ),
@@ -141,15 +127,16 @@ if st.button("Generate Sankey"):
         fig.update_layout(
             title_text=diagram_title,
             title_font=dict(size=18, family="Arial"),
-            font=dict(size=16, family="Arial", color="#41484f"),  # ← This line sets the font for everything
+            font=dict(size=14, family="Arial", color="#41484f"),
             plot_bgcolor="white", paper_bgcolor="white",
             margin=dict(l=30, r=30, t=80, b=80),
             height=700
         )
-               
-        # ---- Use width="stretch" instead of deprecated use_container_width ----
+
+        # ---- Display Sankey ----
         st.plotly_chart(fig, width="stretch", height=700)
 
+        # ---- Download button ----
         st.download_button(
             "Download Sankey as PNG",
             fig.to_image(format="png", width=1200, height=600, scale=3),
