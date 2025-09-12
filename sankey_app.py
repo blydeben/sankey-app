@@ -151,17 +151,3 @@ if st.button("Generate Sankey"):
 
         import plotly.io as pio
         
-        # ---- Convert figure to PNG bytes safely ----
-       # try:
-        #    png_bytes = pio.to_image(fig, format='png', width=1200, height=600, scale=3)
-         #   
-          #  st.download_button(
-           #     "Download Sankey as PNG",
-            #    data=png_bytes,
-             #   file_name="sankey.png",
-              #  mime="image/png"
-            #)
-
-        #except Exception as e:
-         #   st.warning("⚠️ Unable to generate PNG. Make sure 'kaleido' is installed.")
-          #  st.info("You can still view the interactive Sankey diagram above.")
