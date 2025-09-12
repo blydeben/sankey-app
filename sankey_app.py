@@ -18,7 +18,6 @@ st.title("Sankey Diagram Generator")
 
 # ---- User inputs ----
 col1, col2, col3, col4 = st.columns(4)
-
 with col1:
     diagram_title = st.text_input("Diagram title", "Sankey Diagram")
 with col2:
@@ -40,6 +39,33 @@ default_data = {
 df = st.data_editor(pd.DataFrame(default_data), num_rows="dynamic", width='stretch')
 df = df.dropna(subset=["source","target","value"]).reset_index(drop=True)
 
+# ---- Appearance options ----
+st.markdown("### Appearance Options")
+colA, colB, colC = st.columns([2,1,2])
+
+with colA:
+    font_family = st.selectbox(
+        "Font Family",
+        ["Paralucent", "Arial", "Courier New", "Times New Roman", "Verdana", "Tahoma"],
+        index=0
+    )
+with colB:
+    font_size = st.slider("Font Size", 10, 20, 14)
+
+# Define palettes
+palettes = {
+    "Default": ["#41484f", "#015651", "#49dd5b", "#48bfaf", "#4c2d83"],
+    "Warm": ["#FF5733", "#FFC300", "#FF8D1A", "#FF33A6", "#FF7F50"],
+    "Cool": ["#33C1FF", "#33FF57", "#33FFF5", "#3380FF", "#3357FF"],
+    "Monochrome": ["#41484f", "#666666", "#999999", "#CCCCCC", "#EEEEEE"]
+}
+
+with colC:
+    palette_name = st.selectbox("Color Palette", list(palettes.keys()), index=0)
+    color_palette = palettes[palette_name]  # <- actual list of colors
+
+st.markdown("**Note:** Preview may appear blurry due to formatting restrictions in Streamlit. The download is fully interactive and can be zoomed or adjusted for clarity.")
+
 # ---- Sankey generation ----
 if st.button("Generate Sankey"):
 
@@ -47,7 +73,6 @@ if st.button("Generate Sankey"):
         st.warning("⚠️ No valid data to plot.")
     else:
 
-        # ---- Labels and indices ----
         labels = pd.unique(df[["source","target"]].values.ravel())
         label_idx = {lbl: i for i, lbl in enumerate(labels)}
 
@@ -65,11 +90,9 @@ if st.button("Generate Sankey"):
 
         # ---- Node positions ----
         x = [tiers[lbl]/max_tier if max_tier > 0 else 0.5 for lbl in labels]
-
         tier_groups = {}
         for i, lbl in enumerate(labels):
             tier_groups.setdefault(tiers[lbl], []).append(i)
-
         y = [0]*len(labels)
         for tier, indices in tier_groups.items():
             count = len(indices)
@@ -83,10 +106,9 @@ if st.button("Generate Sankey"):
                 for j, idx in enumerate(indices):
                     y[idx] = tier_bottom + margin + j*step
 
-        # ---- Node labels with value underneath ----
+        # ---- Node labels with values underneath ----
         tier0_nodes = [lbl for lbl, t in tiers.items() if t == 0]
         tier0_sum = df[df['source'].isin(tier0_nodes)]['value'].sum()
-
         node_labels = []
         for lbl in labels:
             val = df[df["target"]==lbl]["value"].sum() or df[df["source"]==lbl]["value"].sum()
@@ -97,14 +119,14 @@ if st.button("Generate Sankey"):
             node_labels.append(f"{lbl}\n{val_text}")
 
         # ---- Node colors ----
-        palette = ["#41484f", "#015651", "#49dd5b", "#48bfaf", "#4c2d83"]
-        node_color_list = [palette[i % len(palette)] for i in range(len(labels))]
+        node_color_list = [color_palette[i % len(color_palette)] for i in range(len(labels))]
 
         # ---- Link colors ----
         def hex_to_rgba(hex_color, alpha=0.3):
             hex_color = hex_color.lstrip("#")
             r, g, b = int(hex_color[0:2],16), int(hex_color[2:4],16), int(hex_color[4:6],16)
             return f"rgba({r},{g},{b},{alpha})"
+
         link_colors = [hex_to_rgba(node_color_list[label_idx[s]]) for s in df["source"]]
 
         # ---- Plotly Sankey ----
@@ -126,17 +148,16 @@ if st.button("Generate Sankey"):
 
         fig.update_layout(
             title_text=diagram_title,
-            title_font=dict(size=18, family="Arial"),
-            font=dict(size=14, family="Arial", color="#41484f"),
+            title_font=dict(size=18, family=font_family),
+            font=dict(size=font_size, family=font_family, color="#41484f"),
             plot_bgcolor="white", paper_bgcolor="white",
             margin=dict(l=30, r=30, t=80, b=80),
             height=700
         )
 
-        # ---- Display Sankey ----
         st.plotly_chart(fig, width="stretch", height=700)
 
-        # ---- HTML download button ----
+        # ---- HTML download ----
         st.download_button(
             "Download Sankey as HTML",
             fig.to_html(include_plotlyjs='cdn'),
