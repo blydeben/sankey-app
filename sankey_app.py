@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import io  # For in-memory image
 
 # ---- Streamlit page config ----
 st.set_page_config(page_title="Dynamic Tier Sankey", layout="wide")
@@ -137,11 +136,10 @@ if st.button("Generate Sankey"):
         # ---- Display Sankey ----
         st.plotly_chart(fig, width="stretch", height=700)
 
-        # ---- Download button (PNG) ----
-        img_bytes = fig.to_image(format="png", width=1200, height=600, scale=3)
+        # ---- HTML download button ----
         st.download_button(
-            "Download Sankey as PNG",
-            img_bytes,
-            "sankey.png",
-            "image/png"
+            "Download Sankey as HTML",
+            fig.to_html(include_plotlyjs='cdn'),
+            "sankey.html",
+            "text/html"
         )
