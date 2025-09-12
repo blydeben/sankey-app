@@ -5,11 +5,11 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="Dynamic Tier Sankey", layout="wide")
 
 st.markdown("""
-<style>
+&lt;style&gt;
 .block-container {padding-top: 2rem;}
 .stDataFrame, .stDataEditor {border:1px solid #e0e0e0; border-radius:8px; background:#fff;}
-.stButton>button, .stDownloadButton>button {margin-top:1rem;}
-</style>
+.stButton&gt;button, .stDownloadButton&gt;button {margin-top:1rem;}
+&lt;/style&gt;
 """, unsafe_allow_html=True)
 
 st.title("Sankey Diagram Generator")
@@ -102,9 +102,9 @@ if st.button("Generate Sankey"):
                 val_text = f"{round(val/round_factor)*round_factor:,} {units}"
             else:
                 val_text = f"{val/tier0_sum*100:.{percent_format}f}%"
-            node_labels.append(f"{lbl}<br><span style='font-size:12px'>{val_text}</span>")
+            node_labels.append(f"{lbl} ({val_text})")
 
-        # ---- Colour palette ----
+        # ---- Colour palette (without #f3f8ec) ----
         palette = ["#41484f", "#015651", "#49dd5b", "#48bfaf", "#4c2d83"]
 
         # Assign colours to nodes
@@ -140,9 +140,18 @@ if st.button("Generate Sankey"):
 
         fig.update_layout(
             title_text=diagram_title,
-            font_size=16,
-            margin=dict(l=30,r=30,t=80,b=80), height=700
+            title_font=dict(size=18, family="Arial"),
+            font=dict(size=16, family="Arial", color="#41484f"),  # ← This line sets the font for everything
+            plot_bgcolor="white", paper_bgcolor="white",
+            margin=dict(l=30, r=30, t=80, b=80),
+            height=700
         )
-
+               
         # ---- Use width="stretch" instead of deprecated use_container_width ----
         st.plotly_chart(fig, width="stretch", height=700)
+
+        st.download_button(
+            "Download Sankey as PNG",
+            fig.to_image(format="png", width=1200, height=600, scale=3),
+            "sankey.png", "image/png"
+        )
