@@ -150,8 +150,7 @@ if st.button("Generate Sankey"):
         st.plotly_chart(fig, width="stretch", height=700)
 
         import plotly.io as pio
-        import io
-
+        
         # ---- Convert figure to PNG bytes safely ----
         try:
             png_bytes = pio.to_image(fig, format='png', width=1200, height=600, scale=3)
