@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+import io  # For in-memory image
 
 # ---- Streamlit page config ----
 st.set_page_config(page_title="Dynamic Tier Sankey", layout="wide")
@@ -94,7 +95,7 @@ if st.button("Generate Sankey"):
                 val_text = f"{round(val/round_factor)*round_factor:,} {units}"
             else:
                 val_text = f"{val/tier0_sum*100:.{percent_format}f}%"
-            node_labels.append(f"{lbl}\n{val_text}")  # title on top, value below
+            node_labels.append(f"{lbl}\n{val_text}")
 
         # ---- Node colors ----
         palette = ["#41484f", "#015651", "#49dd5b", "#48bfaf", "#4c2d83"]
@@ -136,11 +137,11 @@ if st.button("Generate Sankey"):
         # ---- Display Sankey ----
         st.plotly_chart(fig, width="stretch", height=700)
 
-        # ---- Download button ----
-        # ---- Download button (HTML version) ----
+        # ---- Download button (PNG) ----
+        img_bytes = fig.to_image(format="png", width=1200, height=600, scale=3)
         st.download_button(
-            "Download Sankey as HTML",
-            fig.to_html(include_plotlyjs='cdn'),
-            "sankey.html",
-            "text/html"
+            "Download Sankey as PNG",
+            img_bytes,
+            "sankey.png",
+            "image/png"
         )
