@@ -16,6 +16,13 @@ st.markdown("""
 
 st.title("Sankey Diagram Generator")
 
+# ---- Diagram title and units above the table ----
+col_title, col_units = st.columns(2)
+with col_title:
+    diagram_title = st.text_input("Diagram Title", "Sankey Diagram")
+with col_units:
+    units = st.text_input("Units", "kWh")
+
 # ---- Example data ----
 default_data = {
     "source": ["Steam","Natural Gas","Steam","Process","Process","Process","Process","Process","Process","Process","Natural Gas"],
@@ -58,16 +65,7 @@ with col2:
     else:
         percent_format = st.selectbox("Decimal places", [0,1,2,3], index=0)
 
-# ---- Preview scale for sharper text ----
-preview_scale = st.slider("Preview Scale (zoom)", 0.5, 3.0, 1.0, 0.1)
 st.markdown("**Note:** Preview may appear blurry due to Streamlit rendering limitations. Downloaded HTML is fully interactive and clear.")
-
-# ---- Diagram title and units ----
-col_title, col_units = st.columns(2)
-with col_title:
-    diagram_title = st.text_input("Diagram Title", "Sankey Diagram")
-with col_units:
-    units = st.text_input("Units", "kWh")
 
 # ---- Sankey generation ----
 if st.button("Generate Sankey"):
@@ -154,11 +152,11 @@ if st.button("Generate Sankey"):
             font=dict(size=font_size, family=font_family, color="#41484f"),
             plot_bgcolor="white", paper_bgcolor="white",
             margin=dict(l=30, r=30, t=80, b=80),
-            height=int(700 * preview_scale)
+            height=700
         )
 
         # ---- Display Sankey ----
-        st.plotly_chart(fig, width="stretch", height=int(700 * preview_scale))
+        st.plotly_chart(fig, width="stretch", height=700)
 
         # ---- HTML download ----
         st.download_button(
