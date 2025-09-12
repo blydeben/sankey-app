@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Dynamic Tier Sankey Generator", layout="wide")
+st.set_page_config(page_title="Dynamic Tier Sankey", layout="wide")
 
 st.markdown("""
 <style>
@@ -104,7 +104,7 @@ if st.button("Generate Sankey"):
                 val_text = f"{val/tier0_sum*100:.{percent_format}f}%"
             node_labels.append(f"{lbl}<br><span style='font-size:12px'>{val_text}</span>")
 
-        # ---- Colour palette (without #f3f8ec) ----
+        # ---- Colour palette ----
         palette = ["#41484f", "#015651", "#49dd5b", "#48bfaf", "#4c2d83"]
 
         # Assign colours to nodes
@@ -140,14 +140,9 @@ if st.button("Generate Sankey"):
 
         fig.update_layout(
             title_text=diagram_title,
-            title_font=dict(size=18, color="#41484f", family="Paralucent"),
-            font_size=16, font_family="Paralucent",
-            plot_bgcolor="white", paper_bgcolor="white",
+            font_size=16,
             margin=dict(l=30,r=30,t=80,b=80), height=700
         )
 
         # ---- Use width="stretch" instead of deprecated use_container_width ----
         st.plotly_chart(fig, width="stretch", height=700)
-
-        import plotly.io as pio
-        
