@@ -62,7 +62,7 @@ with col2:
     if display_mode == "Values":
         round_factor = st.selectbox("Round to nearest", [10000, 1000, 100, 10, 1], index=3)
     else:
-        percent_format = st.selectbox("Decimal places", [0,1,2,3], index=0)
+        percent_format = st.selectbox("Decimal places", [0,1,2], index=0)
 
 st.markdown("**Note:** Preview may appear blurry due to Streamlit rendering limitations. Downloaded HTML is fully interactive and clear.")
 
@@ -114,7 +114,7 @@ def create_sankey(df, font_family, font_size, color_palette, display_mode, round
             val_text = f"{round(val/round_factor)*round_factor:,} {units}"
         else:
             val_text = f"{val/tier0_sum*100:.{percent_format}f}%"
-        node_labels.append(f"{lbl}\n({val_text})")
+        node_labels.append(f"{lbl}<br>({val_text})")
 
     # ---- Node colors ----
     node_color_list = [color_palette[i % len(color_palette)] for i in range(len(labels))]
