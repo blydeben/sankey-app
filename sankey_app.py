@@ -47,9 +47,8 @@ with colB:
 with colC:
     palette_options = {
         "Default": ["#41484f", "#015651", "#49dd5b", "#48bfaf", "#4c2d83"],
-        "Warm": ["#FF5733", "#FFC300", "#FF8D1A", "#FF33A6", "#FF7F50"],
-        "Cool": ["#33C1FF", "#33FF57", "#33FFF5", "#3380FF", "#3357FF"],
-        "Monochrome": ["#41484f", "#666666", "#999999", "#CCCCCC", "#EEEEEE"]
+        "High Contrast": ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf"],
+        "Earthy": ["#b58900", "#cb4b16", "#268bd2", "#2aa198", "#859900", "#6c71c4", "#d33682","#073642", "#fdf6e3"],
     }
     palette_name = st.selectbox("Color Palette", list(palette_options.keys()), index=0)
     color_palette = palette_options[palette_name]
