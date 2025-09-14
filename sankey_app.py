@@ -114,7 +114,7 @@ def create_sankey(df, font_family, font_size, color_palette, display_mode, round
             val_text = f"{round(val/round_factor)*round_factor:,} {units}"
         else:
             val_text = f"{val/tier0_sum*100:.{percent_format}f}%"
-        node_labels.append(f"{lbl}<br><sup>({val_text})")
+        node_labels.append(f"{lbl}<br><sup>{val_text}")
 
     # ---- Node colors ----
     node_color_list = [color_palette[i % len(color_palette)] for i in range(len(labels))]
